@@ -81,32 +81,14 @@ IniWrite, 0, EncoreAlways.ini, Log, zClosedClean
 Log("ii Initialization finished`, starting up...")
 
 ClearSettingsAndRestart()
-;SetTimer, FastCheckForActivity, 500 ; every 500 milliseconds, do... something.
-SetTimer, CheckForIE, 1000 ; Check for iexplore.exe every second.
-SetTimer, CheckForActivity, 500 ; Every three seconds, do a bunch of things.
+SetTimer, __Main__, 500 ; Every three seconds, do a bunch of things.
 
-CheckForIE:
-    If !ProcessExist("iexplore.exe")
+__Main__:
+	If !ProcessExist("iexplore.exe")
 	{
 		Log("ie Starting browser in kiosk mode.")
 		Run, "%ProgramFiles%\Internet Explorer\iexplore.exe" -k http://dcls-mt.iii.com, "%ProgramFiles%\Internet Explorer\"
 	}
-	return
-
-/* 
-FastCheckForActivity:
-	If (A_TimeIdlePhysical < 500) {
-		zActivityPeriods++
-		If (zDisplayingIdleWarning = 1) {
-		DestroyIdleWarning()
-		FileAppend, %A_YYYY%/%A_MM%/%A_DD% %A_Hour%:%A_Min%:%A_Sec%    %zNameWithSpaces%    <> A timeout was interrupted.`n, %zEncoreLogPath%%zLocation%-encorelog.txt
-		Log("<> A timeout was interrupted.")
-		}
-	}
-	return
-	 */
-	 
-CheckForActivity:
 	If (A_TimeIdlePhysical < 500) {
 		zActivityPeriods++
 		If (zDisplayingIdleWarning = 1) {
