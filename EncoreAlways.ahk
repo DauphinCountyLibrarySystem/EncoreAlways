@@ -104,7 +104,7 @@ __Main__:
 		zActivityPeriods := 0 								; clear the activity tracking variable
 		Log(".. Someone touched the computer but did not start a session")
 	}	
-	If (A_TimeIdlePhysical > 15000 and zInSession = 1 and zDisplayingIdleWarning = 0) { ; If idle for more than 3 minutes and a session was started AND we're not already warning of inactivity
+	If (A_TimeIdlePhysical > 150000 and zInSession = 1 and zDisplayingIdleWarning = 0) { ; If idle for more than 150 seconds and a session was started AND we're not already warning of inactivity
 		zDisplayingIdleWarning := 1
 		DisplayIdleWarning()
 	}
