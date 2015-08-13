@@ -31,6 +31,7 @@ global zDisplayingIdleWarning := 0
 global zCountDown := 0
 global zSessionStart := 0
 global zSessionEnd := A_TickCount
+global zEncoreLogPath
 
 ;
 ;	BEGIN INITIALIZATION SECTION
