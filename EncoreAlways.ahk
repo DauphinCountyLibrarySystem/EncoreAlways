@@ -25,13 +25,14 @@ global zNameWithSpaces := A_ComputerName . "                "
 StringLeft, zNameWithSpaces, zNameWithSpaces, 15 ; adds whitespace so the log will be justified.
 SplitPath, A_ScriptName, , , , ScriptBasename
 StringReplace, AppTitle, ScriptBasename, _, %A_SPACE%, All
-global zActivityPeriods := 0
-global zInSession := 0
-global zDisplayingIdleWarning := 0
-global zCountDown := 0
-global zSessionStart := 0
+global zActivityPeriods
+global zInSession
+global zDisplayingIdleWarning
+global zCountDown
+global zSessionStart
 global zSessionEnd := A_TickCount
 global zEncoreLogPath
+global zSessionTimeout
 
 ;
 ;	BEGIN INITIALIZATION SECTION
@@ -57,10 +58,12 @@ IniRead, zClosedClean, EncoreAlways.ini, Log, zClosedClean, 0
 IniRead, zEncoreLogPath, EncoreAlways.ini, General, zEncoreLogPath, %A_Space%
 IniRead, zName, EncoreAlways.ini, General, zName, %A_Space%
 IniRead, zExitPassword, EncoreAlways.ini, General, zExitPassword, %A_Space%
+IniRead, zSessionTimeout, EncoreAlways.ini, General, zSessionTimeout, %A_Space%
 Log("## zClosedClean="zClosedClean)
 Log("## zEncoreLogPath="zEncoreLogPath)
 Log("## zName="zName)
 Log("## zExitPassword="zExitPassword)
+Log("## zSessionTimeout="zSessionTimeout)
 If (zClosedClean = 0) {
 	Log("!! It is likely that EncoreAlways was terminated without warning.")
 	}
@@ -76,13 +79,19 @@ If (zExitPassword = "") {
 	zExitPassword := ""
 	Log("ii The password is blank!")
 	}
+zSessionTimeout := (zSessionTimeout * 1000)
+MsgBox %zSessionTimeout%
+If (zSessionTimeout = "") {
+	zSessionTimeout := 120
+	Log("ii No session timeout was specified, using default of 120 seconds.")
+	}
 
 	
 IniWrite, 0, EncoreAlways.ini, Log, zClosedClean
 Log("ii Initialization finished`, starting up...")
 
 ClearSettingsAndRestart()
-SetTimer, __Main__, 500 ; Every three seconds, do a bunch of things.
+SetTimer, __Main__, 500 ; Every half second, do a bunch of things.
 
 __Main__:
 	If !ProcessExist("iexplore.exe")
