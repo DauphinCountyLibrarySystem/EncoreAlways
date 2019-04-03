@@ -9,6 +9,15 @@
 ;
 ;	All User Startup is '\\<Machine_Name>\c$\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup'.
 ;	I recommend placing a shortcut there, pointing to this, but I have no idea where to put this.
+;
+;
+; -----------------------------  Revision History  --------------------------------------------------------------
+;
+;   03/15/2019  Greg Pruett    Changed script to run Encore in Chrome instead of IE.
+;   04/03/2019	Greg Pruett	   Altered script to clean up some variable initialization.  
+;
+;
+
 
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 ; #Warn  ; Enable warnings to assist with detecting common errors.
@@ -64,6 +73,8 @@ Log("## zEncoreLogPath="zEncoreLogPath)
 Log("## zName="zName)
 Log("## zExitPassword="zExitPassword)
 Log("## zSessionTimeout="zSessionTimeout)
+zInSession := 0
+zDisplayingIdleWarning := 0
 If (zClosedClean = 0) {
 	Log("!! It is likely that EncoreAlways was terminated without warning.")
 	}
@@ -79,8 +90,8 @@ If (zExitPassword = "") {
 	zExitPassword := ""
 	Log("ii The password is blank!")
 	}
-zSessionTimeout := (zSessionTimeout * 1000)
-MsgBox %zSessionTimeout%
+;zSessionTimeout := (zSessionTimeout * 1000)
+;MsgBox %zSessionTimeout%
 If (zSessionTimeout = "") {
 	zSessionTimeout := 120
 	Log("ii No session timeout was specified, using default of 120 seconds.")
@@ -94,11 +105,12 @@ ClearSettingsAndRestart()
 SetTimer, __Main__, 500 ; Every half second, do a bunch of things.
 
 __Main__:
-	If !ProcessExist("iexplore.exe")
+	If !ProcessExist("chrome.exe")
 	{
 		Log("ie Starting browser in kiosk mode.")
-		Run, "%ProgramFiles%\Internet Explorer\iexplore.exe" -k http://dcls-mt.iii.com, "%ProgramFiles%\Internet Explorer\"
+		Run "chrome.exe" -incognito -kiosk http://dcls-mt.iii.com, "c:\Program Files(x86)\Google\Chrome\Application\"
 	}
+	;Log("A_TimeIdlePhysical: "A_TimeIdlePhysical)
 	If (A_TimeIdlePhysical < 500) {
 		zActivityPeriods++
 		If (zDisplayingIdleWarning = 1) {
@@ -118,6 +130,7 @@ __Main__:
 		zDisplayingIdleWarning := 1
 		DisplayIdleWarning()
 	}
+	;Log("zActivityPeriods: "zActivityPeriods)
 	return
 
 BeginSession()
@@ -125,6 +138,7 @@ BeginSession()
 	zSessionStart := A_TickCount
 	zInSession := 1
 	zElapsedTime := ROUND((A_TickCount - zSessionEnd)/1000)/60
+	;MsgBox %zElapsedTime%
 	FileAppend, %A_YYYY%/%A_MM%/%A_DD% %A_Hour%:%A_Min%:%A_Sec%    %zNameWithSpaces%    >> A session has begun. Minutes since last session: %zElapsedTime%`n, %zEncoreLogPath%%zLocation%-encorelog.txt
 	Log(">> A session has begun. Minutes since last session: " zElapsedTime)
 	zBrowserCleared := 0
@@ -183,10 +197,17 @@ ClearSettingsAndRestart() {
 	Gui, Add, Text, x0 y0 w%A_ScreenWidth% h%A_ScreenHeight% +Center, `n`n`n`n`n`nPlease wait, we're reloading the browser.
 	Gui, Show, x0 y0 w%A_ScreenWidth% h%A_ScreenHeight%
 	WinSet, AlwaysOnTop, On, GUI ; not sure on syntax for WinSet
-	Process, Close, iexplore.exe
-	Run, "%A_WinDir%\System32\RunDll32.exe" InetCpl.cpl`,ClearMyTracksByProcess 4351, "%A_WinDir%\System32\", , Hide
-	zBrowserCleared := 1 ; save value to variable so script won't clear IE until it's been used again.
-	Run, "%ProgramFiles%\Internet Explorer\iexplore.exe" -k http://dcls-mt.iii.com, "%ProgramFiles%\Internet Explorer\"
+	Process, Close, chrome.exe
+	
+;	Send ^+{DEL} ; send Ctl-Shft-Del to open "Clear Browsing Data" settings window
+;    WinWaitActive, Settings - Clear browsing data - Google Chrome, , ; Wait till window is active
+
+;    Send {Tab}{Enter} ; tab to "Clear Browsing Data" button and select
+;    WinWaitActive, Settings - Google Chrome, , ; Wait till Clear Browsing Data is complete
+	
+	
+	zBrowserCleared := 1 ; save value to variable so script won't clear browser until it's been used again.
+	Run "chrome.exe" -incognito -kiosk http://dcls-mt.iii.com, "C:\Program Files (x86)\Google\Chrome\Application\"
 	Sleep 7000
 	Gui, Destroy
 	Blockinput Off
@@ -249,7 +270,7 @@ ExitFunc(ExitReason, ExitCode)
     if ExitReason in Exit
 	{
 
-		Process, Close, iexplore.exe
+		Process, Close, chrome.exe
 		IniWrite, 1, EncoreAlways.ini, Log, zClosedClean
 		Log("xx User hit Alt-F4 and correctly entered password`, dying now.")
 	}
@@ -258,26 +279,26 @@ ExitFunc(ExitReason, ExitCode)
         MsgBox, 4, , This will kill Encore.`nAre you sure you want to exit?
         IfMsgBox, No
             return 1  ; OnExit functions must return non-zero to prevent exit.
-		Process, Close, iexplore.exe
+		Process, Close, chrome.exe
 		IniWrite, 1, EncoreAlways.ini, Log, zClosedClean
     }
 	if ExitReason in Logoff,Shutdown
 	{
 
-		Process, Close, iexplore.exe
+		Process, Close, chrome.exe
 		IniWrite, 1, EncoreAlways.ini, Log, zClosedClean
 		Log("xx System logoff or shutdown in process`, dying now.")
 	}
 		if ExitReason in Close
 	{
 
-		Process, Close, iexplore.exe
+		Process, Close, chrome.exe
 		IniWrite, 1, EncoreAlways.ini, Log, zClosedClean
 		Log("!! The system issued a WM_CLOSE or WM_QUIT`, or some other unusual termination is taking place`, dying now.")
 	}
 		if ExitReason not in Close,Exit,Logoff,Menu,Shutdown
 	{
-		Process, Close, iexplore.exe
+		Process, Close, chrome.exe
 		IniWrite, 1, EncoreAlways.ini, Log, zClosedClean
 		Log("!! I am closing unusually`, with ExitReason: " ExitReason "`, dying now.")
 	}
