@@ -75,6 +75,7 @@ Log("## zExitPassword="zExitPassword)
 Log("## zSessionTimeout="zSessionTimeout)
 zInSession := 0
 zDisplayingIdleWarning := 0
+zActivityPeriods := 0
 If (zClosedClean = 0) {
 	Log("!! It is likely that EncoreAlways was terminated without warning.")
 	}
